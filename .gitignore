@@ -1,3 +1,5 @@
 venv/
 __pycache__/
 data/config_private.ini
+
+.idea/
