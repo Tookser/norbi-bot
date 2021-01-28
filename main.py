@@ -39,15 +39,26 @@ def send_support_message(user, message, with_keyboard=True):
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     '''выдаёт сообщение на приветствие'''
+    def is_start_message(text):
+        text = text.lower().strip()
+        words = ['прив', 'здравств', 'здраст', 'hi', 'hello', '/start']
+        return any((word in text) for word in words)
+
+
     id = message.from_user.id
     text = message.text
 
     print(text)
     if text in phrases_by_type:
-        msg = choice(phrases_by_type[text].lst)
+        try:
+            msg = choice(phrases_by_type[text].lst)
+        except IndexError:
+            msg = "В данный момент для вас нет сообщений"
         send_support_message(id, msg)
-    else:
+    elif is_start_message(text):
         send_support_message(id, "Приветствую! Чем могу помочь?")
+    else:
+        send_support_message(id, "Я вас не понимаю.")
     print(id, text)
 
 # @bot.callback_query_handler(func=lambda call: True)
