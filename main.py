@@ -15,7 +15,8 @@ bot = telebot.TeleBot(get_token());
 
 
 def create_keyboard_with_helping_buttons():
-    # создаёт клавиатуру
+    ''' создаёт клавиатуру '''
+    # keyboard = types.InlineKeyboardMarkup(one_time_keyboard=True)
     keyboard = types.InlineKeyboardMarkup()
     for name in config['keyboard']:
         text = config['keyboard'][name]
@@ -25,8 +26,8 @@ def create_keyboard_with_helping_buttons():
     return keyboard
 
 def send_support_message(user, message, with_keyboard=True):
-    # посылает поддерживающее сообщение. по умолчанию с кнопками
-    # можно и без
+    '''посылает поддерживающее сообщение. по умолчанию с кнопками
+    можно и без'''
 
     if with_keyboard:
         keyboard = create_keyboard_with_helping_buttons()
@@ -37,14 +38,14 @@ def send_support_message(user, message, with_keyboard=True):
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    # выдаёт сообщение на приветствие
+    '''выдаёт сообщение на приветствие'''
     print(message.from_user.id, message.text)
     send_support_message(message.from_user.id,
                          "Привет! Я могу тебе помочь.")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
-    # обрабатывает нажатия на кнопочки
+    '''обрабатывает нажатия на кнопочки'''
     if call.data in messages_by_type:
         print(call.data)
         msg = choice(messages_by_type[call.data])
