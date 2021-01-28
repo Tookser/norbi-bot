@@ -1,16 +1,24 @@
+'''функции для загрузки всяких данных'''
+
 import os
+import configparser
 
 from baseconfig import *
 
 def load_config():
-    # загружает из файла конфигурации
-    import configparser  # импортируем библиотеку
-
+    '''загружает из файла конфигурации'''
+      # импортируем библиотеку
     config = configparser.ConfigParser()
     config.read(CONFIG_FILENAME)
 
     return config
 
+def get_token():
+    '''возвращает токен, сам токен'''
+    config = configparser.ConfigParser()
+    config.read(PRIVATE_CONFIG_FILENAME)
+
+    return config['token']['token']
 
 def load_list_from_file(file):
     # загружат список сообщений из файла

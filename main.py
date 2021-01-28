@@ -11,7 +11,7 @@ import baseconfig
 from load import *
 
 
-bot = telebot.TeleBot('1615176197:AAHcgIaI75bD7lDO7RXQuOiymzOSUZlbpKw');
+bot = telebot.TeleBot(get_token());
 
 
 def create_keyboard_with_helping_buttons():
