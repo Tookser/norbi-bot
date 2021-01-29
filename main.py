@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+import shelve
 from os.path import join
 from random import choice
 
@@ -47,6 +48,10 @@ def get_text_messages(message):
 
     id = message.from_user.id
     text = message.text
+    # print(type(id))
+    with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+        if str(id) not in userdb:
+            userdb[str(id)] = {}
 
     print(text)
     if text in phrases_by_type:
