@@ -10,10 +10,25 @@ import telebot
 
 import baseconfig
 from load import *
-
+from userdblib import UserState
+import admin
 
 bot = telebot.TeleBot(get_token());
 
+def get_phrase(userdb, id, lst_of_phrases):
+    all_phrases = set(lst_of_phrases)
+    forbidden_phrases = set(userdb[str(id)]['forbidden_phrases'])
+
+    possible_phrases = all_phrases- forbidden_phrases
+    msg = choice(list(possible_phrases))
+
+    # так как модификация значения
+    # не воспринимается shelve как присваивание
+    record = userdb[str(id)]
+    record['forbidden_phrases'].add(msg)
+    userdb[str(id)] = record
+
+    return msg
 
 def create_keyboard_with_helping_buttons():
     ''' создаёт клавиатуру '''
@@ -45,18 +60,23 @@ def get_text_messages(message):
         words = ['прив', 'здравств', 'здраст', 'hi', 'hello', '/start']
         return any((word in text) for word in words)
 
+    def get_empty_shelve_value():
+        return {'state':UserState(),
+                'forbidden_phrases':set()}
 
     id = message.from_user.id
     text = message.text
     # print(type(id))
     with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
         if str(id) not in userdb:
-            userdb[str(id)] = {}
+            userdb[str(id)] = get_empty_shelve_value()
 
     print(text)
     if text in phrases_by_type:
         try:
-            msg = choice(phrases_by_type[text].lst)
+            with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+                msg = get_phrase(userdb, id, phrases_by_type[text].lst)
+
         except IndexError:
             msg = "В данный момент для вас нет сообщений"
         send_support_message(id, msg)
@@ -76,6 +96,8 @@ def get_text_messages(message):
 
 def main():
     # словарь настроек
+    admin.clean_db()
+
     global config
     config = baseconfig.config
 
