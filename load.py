@@ -39,10 +39,11 @@ def load_list_from_file(file):
     # загружат список сообщений из файла
     result = []
     for line in file:
+        line = line.strip()
         # одинарный хештег не подходит как символ комментария
         # т.к. мб сообщения с хештегами
         if not line.startswith('//') and bool(line):
-            result.append(line.strip())
+            result.append(line)
     return result
 
 @cache
