@@ -56,7 +56,7 @@ def load_phrases():
         return filename.split('.')[0]
 
     phrases = []
-    dir_name = 'data/messages_for_users_by_type/'
+    dir_name = PHRASES_DIRNAME
     for file in os.listdir(dir_name):
         with open(join(dir_name, file)) as f:
             key = get_name_of_list(file)

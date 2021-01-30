@@ -12,6 +12,7 @@ import baseconfig
 from load import *
 from userdblib import UserState
 import admin
+from textprocess import is_start_message
 
 bot = telebot.TeleBot(get_token());
 
@@ -55,10 +56,6 @@ def send_support_message(user, message, with_keyboard=True):
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     '''выдаёт сообщение на приветствие'''
-    def is_start_message(text):
-        text = text.lower().strip()
-        words = ['прив', 'здравств', 'здраст', 'hi', 'hello', '/start']
-        return any((word in text) for word in words)
 
     def get_empty_shelve_value():
         return {'state':UserState(),
