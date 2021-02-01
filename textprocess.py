@@ -18,7 +18,7 @@ def is_set_name(text):
     '''проверяет, является ли сообщение запросом на смену имени'''
     text_words = text.lower().strip().split(' ')
 
-    set_words = ['имя', 'смен', 'име', 'name']
+    set_words = ['имя', 'мен', 'име', 'name', 'chang']
     for set_word in set_words:
         for text_word in text_words:
             if set_word in text_word:
