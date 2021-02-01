@@ -9,9 +9,22 @@ import pytest
 
 import baseconfig
 import load
-import textprocess
+from textprocess import *
 
-is_start_message = textprocess.is_start_message
+russian_letters='абвгдеёжзийклмнопрстуфхцчшщъыьэюя' + \
+                'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+
+assert(len(russian_letters) == 66)
+
+all_symbols = russian_letters +  string.printable
+all_letters_digits = russian_letters + string.digits + string.digits
+
+
+def random_string(k):
+    return ''.join(random.choices(all_symbols, k=k))
+
+def random_non_punct_string(k):
+    return ''.join(random.choices(all_letters_digits, k=k))
 
 
 ########### load.py . load_config() ######
@@ -56,6 +69,42 @@ def test_compound():
 def test_hi_no():
     assert not is_start_message('rwiwo1')
     assert not is_start_message('DfDfgaAHe')
+
+
+## is_request
+def test_no_request():
+    assert not is_request('помоги')
+    assert not is_request('')
+    assert not is_request('Поругать')
+    assert not is_request('Поздравить')
+
+def test_request():
+    request = ['🌈Поддержка🍀', '✅Поздравить🔝',
+               '🤬Поругать😤', '👿Печальное...⛈']
+    for el in request:
+        assert is_request(el)
+
+def test_is_request_fuzzy():
+    for i in range(200):
+        assert not is_request(random_string(randint(4,40)))
+
+
+## is_set_name
+
+def test_no_set():
+    assert not is_set_name('ха-ха')
+    assert not is_set_name('такое')
+    assert not is_set_name('проверка помеклять имня')
+    assert not is_set_name('')
+
+def test_is_set():
+    assert is_set_name('ПомЕняй ИмЯ')
+    assert is_set_name('сМЕНА Имени \n быстро!')
+    assert is_set_name('change my name, please')
+
+def test_almost():
+    assert is_set_name('поминай имя')
+
 
 ########## load.py tests #############
 
@@ -110,12 +159,8 @@ def test_load_list_from_file_result(phrases_lst):
             ['1', '431', 'sjfagkl', 'Привет.', 'Fdfds.', 'DfdsDdd']
 
 def test_load_list_from_file_result(tmp_path):
-    def random_string(k):
-        return ''.join(random.choices(string.ascii_uppercase + \
-                                      string.digits, k=k))
-
     def strings_gen():
-        return [(random_string(randint(1, 50)), True)
+        return [(random_non_punct_string(randint(1, 50)), True)
                 for i in range(randint(20, 100))]
 
     for i in range(10):
@@ -133,3 +178,4 @@ def test_load_list_from_file_result(tmp_path):
         with open(join(tmp_path, 'test.txt')) as f:
             result_lst = load.load_list_from_file(f)
             assert correct_result_of_function == result_lst
+
