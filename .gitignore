@@ -1,5 +1,8 @@
 venv/
+
 __pycache__/
+.pytest_cache/
+
 data/config_private.ini
 data/userdb.db
 
