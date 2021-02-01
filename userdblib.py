@@ -17,3 +17,9 @@ class UserState:
 
     def __repr__(self):
         return f'''{self.__class__.__name__}({self.name}, {self.time})'''
+
+
+def get_empty_shelve_value():
+    '''возвращает пустую запись базы данных'''
+    return {'state':UserState(),
+            'forbidden_phrases':set()}
