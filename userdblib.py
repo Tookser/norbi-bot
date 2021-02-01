@@ -20,6 +20,8 @@ class UserState:
 
 
 def get_empty_shelve_value():
-    '''возвращает пустую запись базы данных'''
+    '''возвращает пустую запись базы данных
+    name == None <==> когда обращаться по имени из профиля'''
     return {'state':UserState(),
-            'forbidden_phrases':set()}
+            'forbidden_phrases':set(),
+            'name':None}

@@ -5,6 +5,7 @@ import shelve
 from os.path import join
 from random import choice
 import shutil
+from functools import wraps
 
 from telebot import types
 import telebot
@@ -14,7 +15,7 @@ from load import *
 import userdblib
 from userdblib import UserState
 import admin
-from textprocess import is_start_message
+from textprocess import *
 
 bot = telebot.TeleBot(get_token());
 
@@ -57,7 +58,103 @@ def send_support_message(user, message, with_keyboard=True):
     print(f'''{"Bot to " + str(user):>20}: {message}''')
     return bot.send_message(user, message, reply_markup=keyboard)
 
-@bot.message_handler(content_types=['text'])
+
+#TODO current state - not working
+@bot.message_handler(commands=['setname'])
+@bot.message_handler(func = lambda message: is_set_name(message.text))
+def read_name(message):
+    '''предлагает установить имя'''
+    id = message.from_user.id
+    msg = send_support_message(id, \
+                            'Введите имя, по которому к вам стоит обращаться.')
+    bot.register_next_step_handler(msg, has_read_name)
+
+
+def interrupt_if_request(func):
+    '''декоратор. возвращает функцию, которая обращается к той фигне, если мы были на полшаге'''
+
+    @wraps(func)
+    def result_func(message):#, *args, **kwargs):
+        if is_request(message.text):
+            request_handler(message)
+        else:
+            func(message) #, *args, **kwargs)
+
+    return result_func
+
+
+@interrupt_if_request
+def has_read_name(message):
+    '''следующий шаг после read_name
+    устанавливает имя пользователя если всё хорошо'''
+    def is_name_ok(name):
+        '''проверка имени на корректность (не мат, не длинное...)'''
+        return True
+
+    name = message.text.strip()
+    id = message.from_user.id
+
+    if is_name_ok(name):
+        with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+            if str(id) not in userdb:
+                userdb[str(id)] = userdblib.get_empty_shelve_value()
+            db_record = userdb[str(id)]
+            db_record['name'] = name
+            userdb[str(id)] = db_record
+            send_support_message(id, f'Ваше имя установлено, {name}')
+    else:
+        send_support_message(id, '__Это__ имя неприемлемо :(')
+
+@bot.message_handler(content_types=['text'],
+                     func=lambda message: is_request(message.text))
+def request_handler(message):
+    '''обработка запроса (на ругань, например)'''
+    id = message.from_user.id
+    text = message.text
+    user = message.from_user
+
+    try:
+        with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+            bot_msg_text = \
+                get_phrase(userdb, id, phrases_by_type[text].lst)
+
+    except IndexError:
+        bot_msg_text = "В данный момент для вас нет сообщений"
+
+    msg = send_support_message(id, bot_msg_text)
+
+    # эти полторы строки - для прерывания потока сообщений
+    # bot.register_next_step_handler(msg, after_first_message, \
+                                   # bot_msg_text, id)
+
+@bot.message_handler(content_types=['text'],
+                     func=lambda message: is_start_message(message.text))
+def hello_handler(message):
+    '''обработка приветствия'''
+    id = message.from_user.id
+    text = message.text
+    user = message.from_user
+
+    print(f'''{id:>20}: {text}''')
+
+    db_record = None
+    with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+        if str(id) not in userdb:
+            userdb[str(id)] = userdblib.get_empty_shelve_value()
+        db_record = userdb[str(id)]
+
+    # with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+        name = None
+        if str(id) in userdb:
+            name = userdb[str(id)]['name']
+
+        if name is None:
+            name = user.first_name + user.last_name
+
+        send_support_message(id, f"Приветствую, {name}! \nЧем могу помочь?")
+
+
+# @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     '''выдаёт сообщение на приветствие'''
     id = message.from_user.id
@@ -67,12 +164,14 @@ def get_text_messages(message):
     print(f'''{id:>20}: {text}''')
 
     # print(type(id))
+    db_record = None
     with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
         if str(id) not in userdb:
             userdb[str(id)] = userdblib.get_empty_shelve_value()
+        db_record = userdb[str(id)]
 
-
-    if text in phrases_by_type:
+    if is_request(text):
+    # если фраза - просьба о чём-то
         try:
             with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
                 bot_msg_text = \
@@ -86,25 +185,30 @@ def get_text_messages(message):
                                        bot_msg_text, id)
 
     elif is_start_message(text):
-        send_support_message(id, f"Приветствую, \
-{user.first_name + user.last_name}! \n\
+    # если приветствие
+        with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
+            name = None
+            if str(id) in userdb:
+                name = userdb[str(id)]['name']
+
+            if name is None:
+                name = user.first_name + user.last_name
+
+            send_support_message(id, f"Приветствую, {name}! \n\
 Чем могу помочь?")
+
     else:
+    # если сообщение непонятное
         send_support_message(id, "Я вас не понимаю.")
-    # print(id, text)
+
+@bot.message_handler(content_types=['text'])
+def unknown_handler(message):
+    send_support_message(id, "Я вас не понимаю.")
 
 def after_first_message(message, bot_msg_text, user_id):
     '''после посылки первого сообщения'''
     send_support_message(user_id,
                          "Я же уже говорил, " + bot_msg_text.lower())
-
-# @bot.callback_query_handler(func=lambda call: True)
-# def callback_worker(call):
-#     '''обрабатывает нажатия на кнопочки'''
-#     if call.data in messages_by_type:
-#         print(call.data)
-#         msg = choice(messages_by_type[call.data])
-#         send_support_message(call.message.chat.id, msg)
 
 def main():
     # REMOVE BEFORE PRODUCTION
