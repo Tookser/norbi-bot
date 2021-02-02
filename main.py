@@ -45,15 +45,15 @@ def create_keyboard_with_helping_buttons():
 
     return keyboard
 
-def send_support_message(user, message, with_keyboard=True):
+def send_support_message(user, message, keyboard=True):
     '''посылает поддерживающее сообщение. по умолчанию с кнопками
     можно и без
     Возвращение сообщения нужно для дальнейшей работки'''
 
-    if with_keyboard:
+    if keyboard:
         keyboard = create_keyboard_with_helping_buttons()
     else:
-        keyboard = None
+        keyboard = types.ReplyKeyboardRemove()
 
     print(f'''{"Bot to " + str(user):>20}: {message}''')
     return bot.send_message(user, message, reply_markup=keyboard)
@@ -65,7 +65,8 @@ def read_name(message):
     '''предлагает установить имя'''
     id = message.from_user.id
     msg = send_support_message(id, \
-                            'Введите имя, по которому к вам стоит обращаться.')
+                            'Введите имя, по которому к вам стоит обращаться.',
+                            keyboard=False)
     bot.register_next_step_handler(msg, has_read_name)
 
 
