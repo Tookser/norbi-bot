@@ -59,7 +59,6 @@ def send_support_message(user, message, with_keyboard=True):
     return bot.send_message(user, message, reply_markup=keyboard)
 
 
-#TODO current state - not working
 @bot.message_handler(commands=['setname'])
 @bot.message_handler(func = lambda message: is_set_name(message.text))
 def read_name(message):
@@ -71,7 +70,10 @@ def read_name(message):
 
 
 def interrupt_if_request(func):
-    '''декоратор. возвращает функцию, которая обращается к той фигне, если мы были на полшаге'''
+    '''декоратор.
+    возвращает функцию,
+    которая обрабатывает request_handler,
+    если мы были на полшаге'''
 
     @wraps(func)
     def result_func(message):#, *args, **kwargs):
@@ -87,9 +89,6 @@ def interrupt_if_request(func):
 def has_read_name(message):
     '''следующий шаг после read_name
     устанавливает имя пользователя если всё хорошо'''
-    def is_name_ok(name):
-        '''проверка имени на корректность (не мат, не длинное...)'''
-        return True
 
     name = message.text.strip()
     id = message.from_user.id
@@ -154,59 +153,20 @@ def hello_handler(message):
         send_support_message(id, f"Приветствую, {name}! \nЧем могу помочь?")
 
 
-# @bot.message_handler(content_types=['text'])
-def get_text_messages(message):
-    '''выдаёт сообщение на приветствие'''
+
+
+@bot.message_handler(content_types=['text'])
+def unknown_handler(message):
+    '''если сообщение непонятное'''
     id = message.from_user.id
     text = message.text
     user = message.from_user
 
-    print(f'''{id:>20}: {text}''')
-
-    # print(type(id))
-    db_record = None
-    with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
-        if str(id) not in userdb:
-            userdb[str(id)] = userdblib.get_empty_shelve_value()
-        db_record = userdb[str(id)]
-
-    if is_request(text):
-    # если фраза - просьба о чём-то
-        try:
-            with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
-                bot_msg_text = \
-                    get_phrase(userdb, id, phrases_by_type[text].lst)
-
-        except IndexError:
-            bot_msg_text = "В данный момент для вас нет сообщений"
-
-        msg = send_support_message(id, bot_msg_text)
-        bot.register_next_step_handler(msg, after_first_message, \
-                                       bot_msg_text, id)
-
-    elif is_start_message(text):
-    # если приветствие
-        with shelve.open(baseconfig.USERDB_FILENAME) as userdb:
-            name = None
-            if str(id) in userdb:
-                name = userdb[str(id)]['name']
-
-            if name is None:
-                name = user.first_name + user.last_name
-
-            send_support_message(id, f"Приветствую, {name}! \n\
-Чем могу помочь?")
-
-    else:
-    # если сообщение непонятное
-        send_support_message(id, "Я вас не понимаю.")
-
-@bot.message_handler(content_types=['text'])
-def unknown_handler(message):
     send_support_message(id, "Я вас не понимаю.")
 
 def after_first_message(message, bot_msg_text, user_id):
-    '''после посылки первого сообщения'''
+    '''после посылки первого сообщения
+    сейчас не используется, но может потом понадобиться'''
     send_support_message(user_id,
                          "Я же уже говорил, " + bot_msg_text.lower())
 

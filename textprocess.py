@@ -25,3 +25,8 @@ def is_set_name(text):
                 return True
 
     return False
+
+
+def is_name_ok(name):
+    '''проверка имени на корректность (не мат, не длинное...)'''
+    return 1 <= len(name) <= 40
