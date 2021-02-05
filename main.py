@@ -21,16 +21,17 @@ bot = telebot.TeleBot(get_token());
 
 def get_phrase(userdb, id, lst_of_phrases):
     all_phrases = set(lst_of_phrases)
-    forbidden_phrases = set(userdb[str(id)]['forbidden_phrases'])
+    user = userdb.setdefault(str(id), userdblib.get_empty_shelve_value())
+    forbidden_phrases = set(user['forbidden_phrases'])
 
-    possible_phrases = all_phrases- forbidden_phrases
+    possible_phrases = all_phrases - forbidden_phrases
     msg = choice(list(possible_phrases))
 
     # так как модификация значения
     # не воспринимается shelve как присваивание
-    record = userdb[str(id)]
-    record['forbidden_phrases'].add(msg)
-    userdb[str(id)] = record
+
+    user['forbidden_phrases'].add(msg)
+    userdb[str(id)] = user
 
     return msg
 
