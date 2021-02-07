@@ -3,6 +3,10 @@ from abc import ABC, abstractmethod
 import configparser
 from collections import namedtuple
 
+import handlersbot as hb
+
+bot = hb.bot
+
 class Test:
     def __init__(self, trigger, steps):
         '''объекты этого класса - тесты
@@ -11,25 +15,37 @@ class Test:
         # config = configparser.ConfigParser()
         # config.read(config_file_name)
         # self._process(config)
+
         first_step = steps[0]
         other_steps = steps[1:]
 
-        handlers = []
+        self._handlers = []
 
-        handlers.append(self._create_first_handler(first_step, trigger))
+        # first_handler(self._create_first_handler(first_step, trigger))
 
-        for st in other_steps:
-            handlers.append(self._create_handler(step))
+        last_handler = ...
+
+        for st in reversed(other_step):
+            self._handlers.append(self._create_handler(step))
 
 
 
     def _create_first_handler(self, step, keyword):
         '''создаёт первый хендлер'''
-        pass
+        @bot.message_handler(commands=[keyword])
+        def handler(message):
+            '''TODO прописать поподробнее, клавиатурку и тд'''
+            id = message.from_user.id
+            msg = send_support_message(id, step.text, keyboard=False)
+            bot.register_next_step_handler(msg, self._handlers)
+
+        return handler
 
     def _create_handler(self, step):
         pass
 
+    def final_handler(self):
+        pass
 
     @abstractmethod
     def process(self):
