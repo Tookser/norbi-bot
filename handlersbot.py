@@ -10,13 +10,14 @@ from telebot import types
 import telebot
 
 import baseconfig
+from baseconfig import *
 from load import *
 import userdblib
 from userdblib import UserState
 import admin
 from textprocess import *
+from stepics import CBTTest, Step
 
-bot = telebot.TeleBot(get_token());
 
 def get_phrase(userdb, id, lst_of_phrases):
     all_phrases = set(lst_of_phrases)
@@ -68,7 +69,6 @@ def read_name(message):
                             'Введите имя, по которому к вам стоит обращаться.',
                             keyboard=False)
     bot.register_next_step_handler(msg, has_read_name)
-
 
 def interrupt_if_request(func):
     '''декоратор.
@@ -149,7 +149,10 @@ def hello_handler(message):
             name = userdb[str(id)]['name']
 
         if name is None:
-            name = user.first_name + user.last_name
+            try:
+                name = user.first_name + user.last_name
+            except TypeError:
+                name = "Неуловимый"
 
         send_support_message(id, f"Приветствую, {name}! \nЧем могу помочь?")
 
@@ -164,6 +167,15 @@ def unknown_handler(message):
     user = message.from_user
 
     send_support_message(id, "Я вас не понимаю.")
+
+ExampleTest = CBTTest(keyword='test',
+                           name='Test',
+                           steps=[Step('Привет!'),
+                                  Step('Как ты себя чувствуешь?'),
+                                  Step('*незначащий вопрос*')],
+                   process_function=lambda l: f'''Вы здороваетесь так: "{l[0]}", а чувствуете себя так:{l[1]}'''
+                            )
+
 
 def after_first_message(message, bot_msg_text, user_id):
     '''после посылки первого сообщения

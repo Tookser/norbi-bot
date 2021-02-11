@@ -1,5 +1,7 @@
 import time
 
+import baseconfig
+
 class UserState:
     '''состояние пользователя - в какой он позиции в чате он сейчас
     name - имя состояния
@@ -25,3 +27,35 @@ def get_empty_shelve_value():
     return {'state':UserState(),
             'forbidden_phrases':set(),
             'name':None}
+
+class UserDB:
+    '''key-value хранилище, по str(id) хранит инфу о пользователе'''
+    # __obj = None
+    # def __new__(cls, *args):
+    #     '''только одна DB'''
+    #     if cls.__obj is None:
+    #         cls.__obj = super().__new__(cls, *args)
+    #     return cls.__obj
+
+    def __init__(self, file_name):
+        self._file_name = file_name
+
+
+
+    def __getitem__(self, id):
+        '''возвращает запись о человеке
+        id мб числом - превращается в строку всё равно'''
+        with shelve.open(self._file_name) as userdb:
+            if str(id) not in userdb:
+                userdb[str(id)] = get_empty_shelve_value()
+            db_record = userdb[str(id)]
+            # db_record = name
+            return db_record
+
+    def __setitem__(self, id, value):
+        '''устанавливает значение записи пользователя'''
+        with shelve.open(self._file_name) as userdb:
+            userdb[str(id)] = value
+
+
+db = UserDB(baseconfig.USERDB_FILENAME)
