@@ -7,10 +7,17 @@ import userdblib
 import handlersbot as hb
 
 import baseconfig
+from wrapper_sendmessage import *
 
 bot = baseconfig.bot
 
+all_handlers = []
+
 class CBTTest:
+    # для хранения в глобальной области хендлеров
+    number_of_handler = 0
+    handler_prefix = 'cbtest_handler'
+
     def __init__(self, *, name='Test', keyword='test', steps=None,
                  process_function=None):
         '''объекты этого класса - тесты
@@ -30,9 +37,7 @@ class CBTTest:
         self._process_function = process_function
 
         first_step = steps[0]
-        print('first step', first_step)
         other_steps = steps[1:]
-        print('other_steps, ', other_steps)
 
         # перевёрнутый список хендлеров
         self._handlers_reversed_list = []
@@ -49,13 +54,21 @@ class CBTTest:
              self._handlers_reversed_list + \
             [self._first_handler]
 
+    @staticmethod
+    def _get_next_handler(self, handler):
+        i = self._handlers_reversed_list.find(handler) - 1
+        return i
 
     @property
     def _last_existing_handler(self):
         '''возвращает последний уже созданный хендлер, он же первый в тесте'''
-        if _handlers_reversed_list:
+
+        if self._handlers_reversed_list:
+            print('first branch')
+            print(self._handlers_reversed_list)
             return self._handlers_reversed_list[-1]
         else:
+            print('second branch')
             return self._last_handler
 
     def _create_first_handler(self, step, keyword):
@@ -64,14 +77,20 @@ class CBTTest:
         print('first handler created')
         # @bot.message_handler(commands=[keyword])
         #TODO вернуть
+
         @bot.message_handler(commands=['test'])
         def handler(message):
             '''TODO прописать поподробнее, клавиатурку и тд'''
             id = message.from_user.id
-            msg = send_support_message(id, step.text, keyboard=False)
+            msg = send_message(id, step.text, keyboard=False)
             # заполнение идёт в обратном порядке
-            bot.register_next_step_handler(msg, self._last_existing_handler)
+            bot.register_next_step_handler(msg, self._get_next_handler(handler))
+            print(hash(self._last_existing_handler))
+
             # ВАЖНО: не разбирает сообщение, т.к. оно /test или типа
+        print(hash(handler))
+        globals()[self.handler_prefix + str(self.number_of_handler)] = handler
+        self.number_of_handler += 1
 
         return handler
 
@@ -86,6 +105,8 @@ class CBTTest:
 
             bot.register_next_step_handler(msg,
                                            self._last_existing_handler)
+        globals()[self.handler_prefix + str(self.number_of_handler)] = handler
+        self.number_of_handler += 1
 
         return handler
 
@@ -94,9 +115,12 @@ class CBTTest:
 
     def _create_last_handler(self):
         '''создаёт финальный хендлер, который всё обрабатывает'''
+        global handler
         def handler(message):
             id = message.from_user.id
             msg = send_support_message(id, self._process(), keyboard=False)
+        globals()[self.handler_prefix + str(self.number_of_handler)] = handler
+        self.number_of_handler += 1
 
         return handler
 
@@ -121,8 +145,12 @@ class Step:
         self._text = text
         # raise NotImplementedError
 
+    @property
     def text(self):
         return self._text
+
+    def __str__(self):
+        return self.text
 
 # ExampleTest = Test(keyword='test',
 #                    name='Test',

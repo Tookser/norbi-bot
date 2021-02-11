@@ -159,18 +159,9 @@ def hello_handler(message):
 
 
 
-@bot.message_handler(content_types=['text'])
-def unknown_handler(message):
-    '''если сообщение непонятное'''
-    id = message.from_user.id
-    text = message.text
-    user = message.from_user
-
-    send_support_message(id, "Я вас не понимаю.")
-
 ExampleTest = CBTTest(keyword='test',
                            name='Test',
-                           steps=[Step('Привет!'),
+                           steps=[Step('Привет из будующего!'),
                                   Step('Как ты себя чувствуешь?'),
                                   Step('*незначащий вопрос*')],
                    process_function=lambda l: f'''Вы здороваетесь так: "{l[0]}", а чувствуете себя так:{l[1]}'''
@@ -182,6 +173,17 @@ def after_first_message(message, bot_msg_text, user_id):
     сейчас не используется, но может потом понадобиться'''
     send_support_message(user_id,
                          "Я же уже говорил, " + bot_msg_text.lower())
+
+@bot.message_handler(content_types=['text'])
+def unknown_handler(message):
+    '''если сообщение непонятное'''
+    id = message.from_user.id
+    text = message.text
+    user = message.from_user
+
+    send_support_message(id, "Я вас не понимаю.")
+
+
 def main():
     # REMOVE 2 strings BEFORE PRODUCTION
     admin.clean_db()
