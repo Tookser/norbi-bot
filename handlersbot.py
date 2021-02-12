@@ -17,7 +17,7 @@ from userdblib import UserState
 import admin
 from textprocess import *
 from stepics import CBTTest, Step
-
+from wrapper_sendmessage import send_message
 
 def get_phrase(userdb, id, lst_of_phrases):
     all_phrases = set(lst_of_phrases)
@@ -75,6 +75,7 @@ def interrupt_if_request(func):
     возвращает функцию,
     которая обрабатывает request_handler,
     если мы были на полшаге'''
+    #  мб сделать DEPRECATED
 
     @wraps(func)
     def result_func(message):#, *args, **kwargs):
@@ -158,13 +159,34 @@ def hello_handler(message):
 
 
 
+def stop_when_stop(func):
+    '''декоратор.
+    возвращает функцию,
+    которая обрабатывает request_handler,
+    если мы были на полшаге'''
+    #  мб сделать DEPRECATED
+
+    def is_stop(s):
+        return s.strip().lower() in ['stop', 'остановись', 'прервись']
+
+    @wraps(func)
+    def result_func(message):#, *args, **kwargs):
+        if is_stop(message.text):
+            send_message(message.from_user.id, "Вы вернулись назад.")
+        else:
+            func(message) #, *args, **kwargs)
+
+    return result_func
+
+
 
 ExampleTest = CBTTest(keyword='test',
                            name='Test',
-                           steps=[Step('Привет из будующего!'),
+                           steps=[Step('Привет из будущего!'),
                                   Step('Как ты себя чувствуешь?'),
                                   Step('*незначащий вопрос*')],
-                   process_function=lambda l: f'''Вы здороваетесь так: "{l[0]}", а чувствуете себя так:{l[1]}'''
+                   process_function=lambda l: f'''Вы здороваетесь так: "{l[0]}", а чувствуете себя так:{l[1]}''',
+                   all_handlers_decorator=stop_when_stop,
                             )
 
 

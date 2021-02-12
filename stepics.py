@@ -1,17 +1,18 @@
 '''здесь будут храниться тесты (шкала Бека/Альтмана), процедуры КПТ и прочее'''
-from abc import ABC, abstractmethod
-import configparser
+# from abc import ABC, abstractmethod
+# import configparser
 from collections import namedtuple
 
 import userdblib
 import handlersbot as hb
 import baseconfig
-from wrapper_sendmessage import *
+from wrapper_sendmessage import send_message
 
 bot = baseconfig.bot
 db = userdblib.db
 
 all_handlers = []
+
 
 class CBTTest:
     # для хранения в глобальной области хендлеров
@@ -19,22 +20,26 @@ class CBTTest:
     handler_prefix = 'cbtest_handler'
 
     def __init__(self, *, name='Test', keyword='test', steps=None,
-                 process_function=None):
+                 process_function=None,
+                 all_handlers_decorator=lambda x: x,
+                 middle_handlers_decorator=lambda x: x,):
         '''объекты этого класса - тесты
         name - имя в базе данных, дб уникально
         keyword - команда для входа в тест, типа beck (если команда /beck)
         steps - шаги - объекты класса Step
         process_function - функция, выдающая результат по списку из бд
+        all_handlers_decorator - декоратор, обрамляющий все хендлеры
+        middle_handlers_decorator - декоратор, обрамляющий хендлеры из середины
         '''
-        # config = configparser.ConfigParser()
-        # config.read(config_file_name)
-        # self._process(config)
         assert steps is not None
         assert process_function is not None
 
         self._bot = hb.bot
         self._name = name
         self._process_function = process_function
+
+        self._all_handlers_decorator = all_handlers_decorator
+        self._middle_handlers_decorator = middle_handlers_decorator
 
         first_step = steps[0]
         other_steps = steps[1:]
@@ -63,11 +68,9 @@ class CBTTest:
         i = self._handlers_reversed_list.find(handler) - 1
         return i
 
-
     def _next_handler(self, id):
         '''обращается к БД чтобы определить, на каком ты сейчас шаге'''
         return self._handlers_list[db[id]['step']]
-
 
     @property
     def _last_existing_handler(self):
@@ -85,9 +88,9 @@ class CBTTest:
         '''создаёт первый хендлер - который будет работать всегда
         по команде типа /beck'''
 
-
         #TODO вернуть
         # @bot.message_handler(commands=[keyword])
+        @self._all_handlers_decorator
         @bot.message_handler(commands=['test'])
         def handler(message):
             '''TODO прописать поподробнее, клавиатурку и тд'''
@@ -111,6 +114,8 @@ class CBTTest:
 
     def _create_middle_handler(self, step):
         '''создаёт хендлер из середины'''
+        @self._all_handlers_decorator
+        @self._middle_handlers_decorator
         def handler(message):
             '''TODO прописать поподробнее, клавиатурку и тд'''
             id = message.from_user.id
@@ -134,15 +139,13 @@ class CBTTest:
 
     def _create_last_handler(self):
         '''создаёт финальный хендлер, который всё обрабатывает'''
-        global handler
+        @self._all_handlers_decorator
         def handler(message):
             id = message.from_user.id
 
             self._write_to_db(id, message.text)
 
             msg = send_message(id, self._process(id), keyboard=False)
-        # globals()[self.handler_prefix + str(self.number_of_handler)] = handler
-        # self.number_of_handler += 1
 
         return handler
 
@@ -151,7 +154,6 @@ class CBTTest:
         в ходе теста.
         хранит в списке'''
         record = db[id]
-
 
         if self._name not in record:
             record[self._name] = []
@@ -162,8 +164,6 @@ class CBTTest:
     def _get_from_db(self, id):
         '''получает список из кусков информации'''
         return userdblib.db[id].get(self._name, [])
-
-
 
 
 class Step:
@@ -179,14 +179,10 @@ class Step:
     def __str__(self):
         return self.text
 
-# ExampleTest = Test(keyword='test',
-#                    name='Test',
-#                    steps=[Step('Привет!'),
-#                           Step('Как ты себя чувствуешь?')],
-#                    process_function=lambda l: f'''Вы здороваетесь так: "{l[0]}", а чувствуете себя так:{l[1]}'''
-#                             )
 
-
-# Эта штука хранится в базе данных у каждого пользователя
-# TestState = namedtuple('TestState', ['test_class', 'num_of_step'])
-
+class NumericTest:
+    '''тест с клавиатуркой и числами, типа шкалы Бека
+    welcome_message - приветствующее сообщение
+    question - вопросы'''
+    def __init__(self, welcome_message, questions, answers):
+        steps = [Step(message) for message in [welcome_message] + questions]
