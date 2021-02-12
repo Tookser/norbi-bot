@@ -1,4 +1,5 @@
 import time
+import shelve
 
 import baseconfig
 
@@ -26,7 +27,8 @@ def get_empty_shelve_value():
     name == None <==> когда обращаться по имени из профиля'''
     return {'state':UserState(),
             'forbidden_phrases':set(),
-            'name':None}
+            'name':None,
+            'step':0,}
 
 class UserDB:
     '''key-value хранилище, по str(id) хранит инфу о пользователе'''
@@ -41,7 +43,6 @@ class UserDB:
         self._file_name = file_name
 
 
-
     def __getitem__(self, id):
         '''возвращает запись о человеке
         id мб числом - превращается в строку всё равно'''
@@ -51,6 +52,7 @@ class UserDB:
             db_record = userdb[str(id)]
             # db_record = name
             return db_record
+
 
     def __setitem__(self, id, value):
         '''устанавливает значение записи пользователя'''

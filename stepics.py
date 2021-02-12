@@ -5,11 +5,11 @@ from collections import namedtuple
 
 import userdblib
 import handlersbot as hb
-
 import baseconfig
 from wrapper_sendmessage import *
 
 bot = baseconfig.bot
+db = userdblib.db
 
 all_handlers = []
 
@@ -54,10 +54,20 @@ class CBTTest:
              self._handlers_reversed_list + \
             [self._first_handler]
 
+        self._handlers_list = self._handlers_reversed_list[::-1]
+
     @staticmethod
     def _get_next_handler(self, handler):
+        '''DEPRECATED'''
+        raise NotImplementedError
         i = self._handlers_reversed_list.find(handler) - 1
         return i
+
+
+    def _next_handler(self, id):
+        '''обращается к БД чтобы определить, на каком ты сейчас шаге'''
+        return self._handlers_list[db[id]['step']]
+
 
     @property
     def _last_existing_handler(self):
@@ -74,23 +84,28 @@ class CBTTest:
     def _create_first_handler(self, step, keyword):
         '''создаёт первый хендлер - который будет работать всегда
         по команде типа /beck'''
-        print('first handler created')
-        # @bot.message_handler(commands=[keyword])
-        #TODO вернуть
 
+
+        #TODO вернуть
+        # @bot.message_handler(commands=[keyword])
         @bot.message_handler(commands=['test'])
         def handler(message):
             '''TODO прописать поподробнее, клавиатурку и тд'''
             id = message.from_user.id
             msg = send_message(id, step.text, keyboard=False)
             # заполнение идёт в обратном порядке
-            bot.register_next_step_handler(msg, self._get_next_handler(handler))
+
+            record = db[id]
+            record['step'] = 1
+            db[id] = record
+
+            bot.register_next_step_handler(msg, self._next_handler(id))
             print(hash(self._last_existing_handler))
 
             # ВАЖНО: не разбирает сообщение, т.к. оно /test или типа
-        print(hash(handler))
-        globals()[self.handler_prefix + str(self.number_of_handler)] = handler
-        self.number_of_handler += 1
+        # print(hash(handler))
+        # globals()[self.handler_prefix + str(self.number_of_handler)] = handler
+        # self.number_of_handler += 1
 
         return handler
 
@@ -99,41 +114,53 @@ class CBTTest:
         def handler(message):
             '''TODO прописать поподробнее, клавиатурку и тд'''
             id = message.from_user.id
-            msg = send_support_message(id, step.text, keyboard=False)
-            self._write_to_db(msg.text)
-            # заполнение handler'ов идёт в обратном порядке, поэтому так
+            self._write_to_db(id, message.text)
+
+            msg = send_message(id, step.text, keyboard=False)
+
+            record = db[id]
+            record['step'] += 1
+            db[id] = record
 
             bot.register_next_step_handler(msg,
-                                           self._last_existing_handler)
+                                           self._next_handler(id))
         globals()[self.handler_prefix + str(self.number_of_handler)] = handler
-        self.number_of_handler += 1
+        # self.number_of_handler += 1
 
         return handler
 
     def _process(self, id):
-        return self._process_function(self._get_from_db(id)[self._name])
+        return self._process_function(self._get_from_db(id))
 
     def _create_last_handler(self):
         '''создаёт финальный хендлер, который всё обрабатывает'''
         global handler
         def handler(message):
             id = message.from_user.id
-            msg = send_support_message(id, self._process(), keyboard=False)
-        globals()[self.handler_prefix + str(self.number_of_handler)] = handler
-        self.number_of_handler += 1
+
+            self._write_to_db(id, message.text)
+
+            msg = send_message(id, self._process(id), keyboard=False)
+        # globals()[self.handler_prefix + str(self.number_of_handler)] = handler
+        # self.number_of_handler += 1
 
         return handler
 
     def _write_to_db(self, id, info):
-        '''записывает в key-value кусочек информации
+        '''записывает в key-value кусочек информации, полученной от человека
+        в ходе теста.
         хранит в списке'''
-        record = userdblib.db[id]
+        record = db[id]
+
+
         if self._name not in record:
             record[self._name] = []
         record[self._name].append(info)
-        userdblib.db[id] = record
+
+        db[id] = record
 
     def _get_from_db(self, id):
+        '''получает список из кусков информации'''
         return userdblib.db[id].get(self._name, [])
 
 
