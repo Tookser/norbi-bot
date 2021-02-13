@@ -17,7 +17,7 @@ PRIVATE_CONFIG_FILENAME = join(DATA_DIRECTORY, 'config_private.ini')
 
 USERDB_FILENAME = join(DATA_DIRECTORY, 'userdb.db')
 PHRASES_DIRNAME = join(DATA_DIRECTORY, 'messages_for_users_by_type')
-
+TESTS_DIRNAME = join(DATA_DIRECTORY, 'cbt_tests')
 
 class PhrasesList:
     def __init__(self, lst, filename='BLANK', button_text='---'):

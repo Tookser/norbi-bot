@@ -16,7 +16,7 @@ import userdblib
 from userdblib import UserState
 import admin
 from textprocess import *
-from stepics import CBTTest, Step
+from stepics import CBTTest, NumericTest, Step
 from wrapper_sendmessage import send_message
 
 def get_phrase(userdb, id, lst_of_phrases):
@@ -167,7 +167,7 @@ def stop_when_stop(func):
     #  мб сделать DEPRECATED
 
     def is_stop(s):
-        return s.strip().lower() in ['stop', 'остановись', 'прервись']
+        return s.strip().lower() in ['/stop', 'stop', 'остановись', 'прервись']
 
     @wraps(func)
     def result_func(message):#, *args, **kwargs):
@@ -179,15 +179,29 @@ def stop_when_stop(func):
     return result_func
 
 
-
-ExampleTest = CBTTest(keyword='test',
+# /test
+example_test = CBTTest(keyword='test',
                            name='Test',
                            steps=[Step('Привет из будущего!'),
                                   Step('Как ты себя чувствуешь?'),
                                   Step('*незначащий вопрос*')],
                    process_function=lambda l: f'''Вы здороваетесь так: "{l[0]}", а чувствуете себя так:{l[1]}''',
-                   all_handlers_decorator=stop_when_stop,
+                   # all_handlers_decorator=stop_when_stop,
                             )
+
+# /altman
+# def altman_process_function(lst):
+#     return 'У вас гипа!'
+# altman_steps = \
+# ['Шкала Альтмана для самооценки мании\nAltman self-rating mania scale',]
+# altman_test = NumericTest(keyword='altman',
+#                          name='Altman',
+#                          steps=altman_steps,
+#                          process_function=altman_process_function,
+#                          all_handlers_decorator=stop_when_stop)
+
+# /altman
+altman_test = NumericTest.create_from_file(join(TESTS_DIRNAME, 'altman.ini'))
 
 
 def after_first_message(message, bot_msg_text, user_id):

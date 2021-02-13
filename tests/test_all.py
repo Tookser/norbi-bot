@@ -1,11 +1,15 @@
+## FOR ALL TESTS
 import sys
 sys.path.append('..')
+import pytest
+## FOR ALL TESTS
+
 from os.path import join
 from random import randint
 import random
 import string
 
-import pytest
+
 
 import baseconfig
 import load
@@ -179,3 +183,30 @@ def test_load_list_from_file_result(tmp_path):
             result_lst = load.load_list_from_file(f)
             assert correct_result_of_function == result_lst
 
+
+@pytest.fixture
+def cbt_test(tmp_path):
+    '''создаёт конфиг кпт-теста из реального теста (шкала Альтмана)'''
+    from os.path import join
+    from shutil import copy
+    from baseconfig import TESTS_DIRNAME
+
+    from stepics import NumericTest
+
+    file_name = 'altman.ini'
+    copy(join(TESTS_DIRNAME, file_name), tmp_path)
+    # config = configparser.ConfigParser()
+    # config.read(join(tmp_path, file_name))
+    return NumericTest.create_from_file(join(tmp_path, file_name))
+
+def test_cbt_something_loads(cbt_test):
+    pass
+
+def test_cbt_is_general(cbt_test):
+    assert cbt_test.name == 'Altman'
+    assert cbt_test.keyword == 'altman'
+
+def test_cbt_steps(cbt_test):
+    assert len(cbt_test.steps) == 5
+    for i, val in enumerate(cbt_test.steps):
+        assert len(val.keyboard.keyboard) == 5
