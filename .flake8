@@ -1,0 +1,4 @@
+[flake8]
+ignore = W503,W504
+exclude = .git,.idea,.handler-saves,venv,venv_dev,__pycache__
+max-line-length = 120
