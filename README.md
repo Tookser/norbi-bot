@@ -10,3 +10,10 @@ Telegram bot on pytelegrambotapi created to help people with mental issues.
 * Привязка событий ко времени
 * Индивидуализация
 * Другое...
+
+Перед использование нужно создать файл config_private.ini в папке data с содержимым:
+
+[token]
+
+token=ТОКЕНВАШЕГОБОТА
+
