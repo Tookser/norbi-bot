@@ -231,8 +231,18 @@ class NumericTest(CBTTest):
                          process_function=process_function,)
 
     @classmethod
-    def create_from_file(cls, file_name):
+    def create_from_file(cls, file_name, *, process_function=None):
         #  Считывает тест из конфига
+        if process_function is None:
+            '''если обработчик результата не задан'''
+            def process_function(lst):
+                '''просто посчитать баллы'''
+                result = 0
+                for i, val in enumerate(lst):
+                    # TODO сделать больше 9 баллов возможно
+                    result += int(val[1])
+                return result
+
         test = configparser.ConfigParser()
         test.read(file_name)
 
@@ -259,12 +269,7 @@ class NumericTest(CBTTest):
                     raise
             steps.append(Step(text, answers))
 
-        def process_function(lst):
-            result = 0
-            for i, val in enumerate(lst):
-                # TODO сделать больше 9 баллов возможно
-                result += int(val[1])
-            return result
+
 
         return NumericTest(name=name, keyword=keyword, steps=steps,
                            process_function=process_function)

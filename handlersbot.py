@@ -201,7 +201,27 @@ example_test = CBTTest(keyword='test',
 #                          all_handlers_decorator=stop_when_stop)
 
 # /altman
-altman_test = NumericTest.create_from_file(join(TESTS_DIRNAME, 'altman.ini'))
+def altman_process_function(lst):
+    result = 0
+    for val in lst:
+        # TODO сделать больше 9 баллов возможным
+        result += int(val[1])
+    if 0 <= result <= 5:
+        your_state = 'норма'
+    elif 6 <= result <= 9:
+        your_state = 'гипомания'
+    elif 10 <= result <= 12:
+        your_state = 'гипомания или мания'
+    elif 13 <= result <= 20:
+        your_state = 'мания'
+
+    return 'Вы набрали {} баллов по шкале Альтмана ({}).'.format(result,
+                                                                 your_state)
+
+
+
+altman_test = NumericTest.create_from_file(join(TESTS_DIRNAME, 'altman.ini'),
+                                   process_function=altman_process_function)
 
 
 def after_first_message(message, bot_msg_text, user_id):
